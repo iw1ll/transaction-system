@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"transaction-system/internal/database/models"
+	"transaction-system/internal/models"
 )
 
 func WalletsHandler(db *sql.DB) http.HandlerFunc {

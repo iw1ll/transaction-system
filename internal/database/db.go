@@ -3,7 +3,7 @@ package database
 import (
 	"database/sql"
 	"log"
-	"transaction-system/internal/database/utils"
+	"transaction-system/internal/utils"
 
 	_ "github.com/lib/pq"
 )

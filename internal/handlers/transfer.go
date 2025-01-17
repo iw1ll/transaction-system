@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"transaction-system/internal/database/models"
+	"transaction-system/internal/models"
 )
 
 func SendHandler(db *sql.DB) http.HandlerFunc {

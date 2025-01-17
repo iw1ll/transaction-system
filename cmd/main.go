@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
-	"transaction-system/internal/database/database"
-	"transaction-system/internal/database/handlers"
+	"transaction-system/internal/database"
+	"transaction-system/internal/handlers"
 )
 
 func main() {
