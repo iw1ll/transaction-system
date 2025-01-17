@@ -2,66 +2,80 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"os"
 	"transaction-system/internal/utils"
 
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
-func InitDB(connStr string) *sql.DB {
+type Database struct {
+	*sql.DB
+}
+
+func NewDatabase() (*Database, error) {
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	dbUsername := os.Getenv("DB_USERNAME")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbDatabase := os.Getenv("DB_DATABASE")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+
+	connStr := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=disable",
+		dbUsername,
+		dbPassword,
+		dbDatabase,
+		dbHost,
+		dbPort,
+	)
+
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	err = db.Ping()
-	if err != nil {
-		log.Fatal("Cannot connect to the database:", err)
+	if err := db.Ping(); err != nil {
+		return nil, err
 	}
 
-	return db
+	return &Database{db}, nil
 }
 
-func CreateTable(db *sql.DB) {
+func (d *Database) CreateTable() error {
 	query := `
-        CREATE TABLE IF NOT EXISTS wallets (
-            address VARCHAR PRIMARY KEY,
-            balance FLOAT
-        );`
-
-	_, err := db.Exec(query)
-	if err != nil {
-		log.Fatal("Error creating table:", err)
-	}
+		CREATE TABLE IF NOT EXISTS wallets (
+		address VARCHAR PRIMARY KEY,
+		balance FLOAT
+ 	);`
+	_, err := d.Exec(query)
+	return err
 }
 
-func WalletsExist(db *sql.DB) bool {
+func (d *Database) WalletsExist() bool {
 	var count int
-	row := db.QueryRow("SELECT COUNT(*) FROM wallets")
+	row := d.QueryRow("SELECT COUNT(*) FROM wallets")
 	err := row.Scan(&count)
-	if err != nil || count == 0 {
-		return false
-	}
-	return true
+	return err == nil && count > 0
 }
 
-func CreateWallets(db *sql.DB, count int) {
-	tx, err := db.Begin()
+func (d *Database) CreateWallets(count int) error {
+	tx, err := d.Begin()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	for i := 0; i < count; i++ {
 		address := utils.GenerateRandomAddress()
-		_, err := tx.Exec("INSERT INTO wallets (address, balance) VALUES ($1, $2)", address, 100.0)
-		if err != nil {
-			log.Fatal(err)
+		if _, err := tx.Exec("INSERT INTO wallets (address, balance) VALUES ($1, $2)", address, 100.0); err != nil {
+			tx.Rollback()
+			return err
 		}
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("Created wallets:", count)
+	return tx.Commit()
 }

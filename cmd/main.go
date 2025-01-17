@@ -8,17 +8,26 @@ import (
 )
 
 func main() {
-	db := database.InitDB("user=user password=password dbname=transaction_system host=localhost port=5432 sslmode=disable")
+	db, err := database.NewDatabase()
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer db.Close()
 
-	database.CreateTable(db)
-
-	if !database.WalletsExist(db) {
-		database.CreateWallets(db, 10)
+	if err := db.CreateTable(); err != nil {
+		log.Fatal(err)
 	}
 
-	http.HandleFunc("/api/send", handlers.SendHandler(db))
-	http.HandleFunc("/api/wallets", handlers.WalletsHandler(db))
+	if !db.WalletsExist() {
+		if err := db.CreateWallets(10); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	walletHandler := handlers.NewWalletHandler(db.DB)
+
+	http.HandleFunc("/api/send", walletHandler.Send)
+	http.HandleFunc("/api/wallets", walletHandler.GetWallets)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
