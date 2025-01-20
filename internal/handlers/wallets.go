@@ -5,14 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"transaction-system/internal/database"
 	"transaction-system/internal/models"
 )
 
 type WalletHandler struct {
-	db *sql.DB
+	db *database.Database
 }
 
-func NewWalletHandler(db *sql.DB) *WalletHandler {
+func NewWalletHandler(db *database.Database) *WalletHandler {
 	return &WalletHandler{db}
 }
 
@@ -23,13 +25,14 @@ func (h *WalletHandler) Send(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req models.TransferRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
 	var balance float64
-	err := h.db.QueryRow("SELECT balance FROM wallets WHERE address = $1", req.From).Scan(&balance)
+	err = h.db.QueryRow("SELECT balance FROM wallets WHERE address = $1", req.From).Scan(&balance)
 	if err != nil {
 		http.Error(w, "Sender wallet not found", http.StatusNotFound)
 		return
@@ -40,13 +43,20 @@ func (h *WalletHandler) Send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := h.db.Exec("UPDATE wallets SET balance = balance - $1 WHERE address = $2", req.Amount, req.From); err != nil {
+	_, err = h.db.Exec("UPDATE wallets SET balance = balance - $1 WHERE address = $2", req.Amount, req.From)
+	if err != nil {
 		http.Error(w, "Error updating sender wallet", http.StatusInternalServerError)
 		return
 	}
 
-	if _, err := h.db.Exec("UPDATE wallets SET balance = balance + $1 WHERE address = $2", req.Amount, req.To); err != nil {
+	_, err = h.db.Exec("UPDATE wallets SET balance = balance + $1 WHERE address = $2", req.Amount, req.To)
+	if err != nil {
 		http.Error(w, "Error updating receiver wallet", http.StatusInternalServerError)
+		return
+	}
+
+	if err = h.db.InsertTransaction(req.From, req.To, req.Amount); err != nil {
+		http.Error(w, "Error logging transaction", http.StatusInternalServerError)
 		return
 	}
 
@@ -56,30 +66,39 @@ func (h *WalletHandler) Send(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *WalletHandler) GetWallets(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+func (h *WalletHandler) GetLastTransactions(w http.ResponseWriter, r *http.Request) {
+	countStr := r.URL.Query().Get("count")
+	count, err := strconv.Atoi(countStr)
+	if err != nil || count <= 0 {
+		http.Error(w, "Invalid count parameter", http.StatusBadRequest)
 		return
 	}
 
-	rows, err := h.db.Query("SELECT address, balance FROM wallets")
+	transactions, err := h.db.GetLastTransactions(count)
 	if err != nil {
-		http.Error(w, "Error fetching wallets", http.StatusInternalServerError)
+		http.Error(w, "Error retrieving transactions", http.StatusInternalServerError)
 		return
-	}
-	defer rows.Close()
-
-	var wallets []models.Wallet
-	for rows.Next() {
-		var wallet models.Wallet
-		if err := rows.Scan(&wallet.Address, &wallet.Balance); err != nil {
-			http.Error(w, "Error scanning wallet", http.StatusInternalServerError)
-			return
-		}
-		wallets = append(wallets, wallet)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(wallets)
+	json.NewEncoder(w).Encode(transactions)
+}
+
+func (h *WalletHandler) GetBalance(w http.ResponseWriter, r *http.Request) {
+	address := r.URL.Path[len("/api/wallet/"):]
+
+	var balance float64
+	err := h.db.QueryRow("SELECT balance FROM wallets WHERE address = $1", address).Scan(&balance)
+	if err == sql.ErrNoRows {
+
+		http.Error(w, "Wallet not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		http.Error(w, "Error retrieving balance", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	response := models.BalanceResponse{Balance: balance}
+	json.NewEncoder(w).Encode(response)
 }

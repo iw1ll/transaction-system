@@ -18,16 +18,21 @@ func main() {
 		log.Fatal(err)
 	}
 
+	if err := db.CreateTransactionTable(); err != nil {
+		log.Fatal(err)
+	}
+
 	if !db.WalletsExist() {
 		if err := db.CreateWallets(10); err != nil {
 			log.Fatal(err)
 		}
 	}
 
-	walletHandler := handlers.NewWalletHandler(db.DB)
+	walletHandler := handlers.NewWalletHandler(db)
 
 	http.HandleFunc("/api/send", walletHandler.Send)
-	http.HandleFunc("/api/wallets", walletHandler.GetWallets)
+	http.HandleFunc("/api/transactions/", walletHandler.GetLastTransactions)
+	http.HandleFunc("/api/wallet/", walletHandler.GetBalance)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
