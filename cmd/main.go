@@ -12,7 +12,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	defer db.Close()
+
+	log.Println("Successfully connected to the database")
 
 	if err := db.CreateTable(); err != nil {
 		log.Fatal(err)
@@ -33,6 +36,8 @@ func main() {
 	http.HandleFunc("/api/send", walletHandler.Send)
 	http.HandleFunc("/api/transactions/", walletHandler.GetLastTransactions)
 	http.HandleFunc("/api/wallet/", walletHandler.GetBalance)
+
+	log.Println("Server is starting on port :8080")
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

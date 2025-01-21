@@ -21,11 +21,11 @@ func NewDatabase() (*Database, error) {
 		log.Fatal("Error loading .env file")
 	}
 
-	dbUsername := os.Getenv("DB_USERNAME")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbDatabase := os.Getenv("DB_DATABASE")
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
+	dbUsername := os.Getenv("POSTGRES_USER")
+	dbPassword := os.Getenv("POSTGRES_PASSWORD")
+	dbDatabase := os.Getenv("POSTGRES_DB")
+	dbHost := os.Getenv("POSTGRES_HOST")
+	dbPort := os.Getenv("POSTGRES_PORT")
 
 	connStr := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=disable",
 		dbUsername, dbPassword, dbDatabase, dbHost, dbPort)
@@ -44,23 +44,23 @@ func NewDatabase() (*Database, error) {
 
 func (d *Database) CreateTable() error {
 	query := `
-    CREATE TABLE IF NOT EXISTS wallets (
-    address VARCHAR PRIMARY KEY,
-    balance FLOAT
-    );`
+	CREATE TABLE IF NOT EXISTS wallets (
+		address VARCHAR PRIMARY KEY,
+		balance FLOAT
+	);`
 	_, err := d.Exec(query)
 	return err
 }
 
 func (d *Database) CreateTransactionTable() error {
 	query := `
-    CREATE TABLE IF NOT EXISTS transactions (
-        id SERIAL PRIMARY KEY,
-        from_address VARCHAR NOT NULL,
-        to_address VARCHAR NOT NULL,
-        amount FLOAT NOT NULL,
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );`
+		CREATE TABLE IF NOT EXISTS transactions (
+			id SERIAL PRIMARY KEY,
+			from_address VARCHAR NOT NULL,
+			to_address VARCHAR NOT NULL,
+			amount FLOAT NOT NULL,
+			timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		);`
 	_, err := d.Exec(query)
 	return err
 }
@@ -77,6 +77,7 @@ func (d *Database) CreateWallets(count int) error {
 	if err != nil {
 		return err
 	}
+
 	for i := 0; i < count; i++ {
 		address := utils.GenerateRandomAddress()
 		if _, err := tx.Exec("INSERT INTO wallets (address, balance) VALUES ($1, $2)", address, 100.0); err != nil {
@@ -84,6 +85,7 @@ func (d *Database) CreateWallets(count int) error {
 			return err
 		}
 	}
+
 	if err = tx.Commit(); err != nil {
 		return err
 	}
@@ -95,6 +97,7 @@ func (d *Database) GetLastTransactions(count int) ([]models.Transaction, error) 
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	var transactions []models.Transaction
@@ -105,10 +108,24 @@ func (d *Database) GetLastTransactions(count int) ([]models.Transaction, error) 
 		}
 		transactions = append(transactions, t)
 	}
+
 	return transactions, nil
 }
 
 func (d *Database) InsertTransaction(from, to string, amount float64) error {
-	_, err := d.Exec("INSERT INTO transactions (from_address, to_address, amount) VALUES ($1, $2, $3)", from, to, amount)
-	return err
+	tx, err := d.Begin()
+	if err != nil {
+		return err
+	}
+
+	if _, err := d.Exec("INSERT INTO transactions (from_address, to_address, amount) VALUES ($1, $2, $3)", from, to, amount); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }

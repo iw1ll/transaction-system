@@ -39,7 +39,7 @@ func (h *WalletHandler) Send(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if balance < req.Amount {
-		http.Error(w, "Insufficient funds", http.StatusPaymentRequired)
+		http.Error(w, "Insufficient funds", http.StatusForbidden)
 		return
 	}
 
@@ -85,12 +85,11 @@ func (h *WalletHandler) GetLastTransactions(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *WalletHandler) GetBalance(w http.ResponseWriter, r *http.Request) {
-	address := r.URL.Path[len("/api/wallet/"):]
+	address := r.URL.Path[len("/api/wallet/") : len(r.URL.Path)-len("/balance")]
 
 	var balance float64
 	err := h.db.QueryRow("SELECT balance FROM wallets WHERE address = $1", address).Scan(&balance)
 	if err == sql.ErrNoRows {
-
 		http.Error(w, "Wallet not found", http.StatusNotFound)
 		return
 	} else if err != nil {
