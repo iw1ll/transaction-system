@@ -25,3 +25,5 @@
 -   GET http://localhost:8080/api/wallet/{address}/balance \
 Возвращает информацию о балансе кошелька 
 
+### Ссылка на проект в GitHub:
+https://github.com/iw1ll/transaction-system
