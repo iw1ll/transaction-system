@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"transaction-system/internal/database"
 	"transaction-system/internal/models"
 )
@@ -60,7 +61,7 @@ func (h *WalletHandler) Send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": fmt.Sprintf("Successfully transferred %.2f from %s to %s", req.Amount, req.From, req.To),
 	})
@@ -85,19 +86,40 @@ func (h *WalletHandler) GetLastTransactions(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *WalletHandler) GetBalance(w http.ResponseWriter, r *http.Request) {
-	address := r.URL.Path[len("/api/wallet/") : len(r.URL.Path)-len("/balance")]
+	pathParts := strings.Split(r.URL.Path, "/")
 
-	var balance float64
-	err := h.db.QueryRow("SELECT balance FROM wallets WHERE address = $1", address).Scan(&balance)
-	if err == sql.ErrNoRows {
-		http.Error(w, "Wallet not found", http.StatusNotFound)
-		return
-	} else if err != nil {
-		http.Error(w, "Error retrieving balance", http.StatusInternalServerError)
+	// Ожидаемый формат: /api/wallet/{address}/balance
+	if len(pathParts) < 5 ||
+		pathParts[0] != "" ||
+		pathParts[1] != "api" ||
+		pathParts[2] != "wallet" ||
+		pathParts[4] != "balance" {
+		errorResponse(w, "Invalid URL format. Use /api/wallet/{address}/balance", http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	address := pathParts[3]
+
+	var balance float64
+	err := h.db.QueryRow("SELECT balance FROM wallets WHERE address = $1", address).Scan(&balance)
+
+	switch {
+	case err == sql.ErrNoRows:
+		errorResponse(w, "Wallet not found", http.StatusNotFound)
+		return
+	case err != nil:
+		errorResponse(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
 	response := models.BalanceResponse{Balance: balance}
 	json.NewEncoder(w).Encode(response)
+}
+
+func errorResponse(w http.ResponseWriter, message string, statusCode int) {
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(map[string]string{
+		"error":  message,
+		"status": strconv.Itoa(statusCode),
+	})
 }
