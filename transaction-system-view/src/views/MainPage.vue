@@ -1,152 +1,152 @@
 <template>
     <div class="container">
-      <!-- Форма отправки средств -->
-      <section class="section">
-        <h2>Отправить средства</h2>
-        <div class="form-group">
-          <input v-model="sendData.from" placeholder="Отправитель">
-          <input v-model="sendData.to" placeholder="Получатель">
-          <input v-model.number="sendData.amount" type="number" placeholder="Сумма">
-          <button @click="handleSend">Отправить</button>
-        </div>
-        <div v-if="sendError" class="error">{{ sendError }}</div>
-      </section>
+        <!-- Форма отправки средств -->
+        <section class="section">
+            <h2>Отправить средства</h2>
+            <div class="form-group">
+                <input v-model="sendData.from" placeholder="Отправитель"/>
+                <input v-model="sendData.to" placeholder="Получатель"/>
+                <input v-model.number="sendData.amount" type="number" placeholder="Сумма"/>
+                <button @click="handleSend">Отправить</button>
+            </div>
+            <div v-if="sendError" class="error">{{ sendError }}</div>
+        </section>
   
-      <!-- Проверка баланса -->
-      <section class="section">
-        <h2>Баланс кошелька</h2>
-        <div class="form-group">
-          <input v-model="walletAddress" placeholder="Адрес кошелька">
-          <button @click="fetchBalance">Проверить</button>
-        </div>
-        <div v-if="balance !== null" class="balance">
-          Текущий баланс: {{ balance }} ETH
-        </div>
-        <div v-if="balanceError" class="error">{{ balanceError }}</div>
-      </section>
+        <!-- Проверка баланса -->
+        <section class="section">
+            <h2>Баланс кошелька</h2>
+            <div class="form-group">
+                <input v-model="walletAddress" placeholder="Адрес кошелька"/>
+                <button @click="fetchBalance">Проверить</button>
+            </div>
+            <div v-if="balance !== null" class="balance">
+                Текущий баланс: {{ balance }} ETH
+            </div>
+            <div v-if="balanceError" class="error">{{ balanceError }}</div>
+        </section>
   
-      <!-- История транзакций -->
-      <section class="section">
-        <h2>Последние транзакции</h2>
-        <div class="form-group">
-          <input v-model.number="transactionsLimit" type="number" min="1" max="100">
-          <button @click="fetchTransactions">Загрузить</button>
-        </div>
-        <div v-if="isLoading" class="loading">Загрузка...</div>
-        <div v-else>
-          <TransactionItem 
-            v-for="tx in transactions"
-            :key="tx.hash"
-            :transaction="tx"
-          />
-        </div>
-        <div v-if="transactionsError" class="error">{{ transactionsError }}</div>
-      </section>
+        <!-- История транзакций -->
+        <section class="section">
+            <h2>Последние транзакции</h2>
+            <div class="form-group">
+                <input v-model.number="transactionsLimit" type="number" min="1" max="100"/>
+                <button @click="fetchTransactions">Загрузить</button>
+            </div>
+            <div v-if="isLoading" class="loading">Загрузка...</div>
+            <div v-else>
+                <TransactionItem 
+                    v-for="tx in transactions"
+                    :key="tx.hash"
+                    :transaction="tx"
+                />
+            </div>
+            <div v-if="transactionsError" class="error">{{ transactionsError }}</div>
+        </section>
     </div>
-  </template>
+</template>
   
-  <script setup lang="ts">
-  import { ref } from 'vue'
-  import TransactionItem from '@/components/TransactionItem.vue'
+<script setup lang="ts">
+import { ref } from 'vue';
+import TransactionItem from '@/components/TransactionItem.vue';
   
-  // Типы
-  interface Transaction {
+// Типы
+interface Transaction {
     hash: string
     from: string
     to: string
     amount: number
     timestamp: number
-  }
+}
   
-  interface BalanceResponse {
+interface BalanceResponse {
     address: string
     balance: number
-  }
+}
   
-  // Состояние отправки средств
-  const sendData = ref({
+// Состояние отправки средств
+const sendData = ref({
     from: '',
     to: '',
-    amount: 0
-  })
-  const sendError = ref<string>('')
+    amount: 0,
+});
+const sendError = ref<string>('');
   
-  // Состояние баланса
-  const walletAddress = ref<string>('')
-  const balance = ref<number | null>(null)
-  const balanceError = ref<string>('')
+// Состояние баланса
+const walletAddress = ref<string>('');
+const balance = ref<number | null>(null);
+const balanceError = ref<string>('');
   
-  // Состояние транзакций
-  const transactionsLimit = ref<number>(1)
-  const transactions = ref<Transaction[]>([])
-  const isLoading = ref<boolean>(false)
-  const transactionsError = ref<string>('')
+// Состояние транзакций
+const transactionsLimit = ref<number>(1);
+const transactions = ref<Transaction[]>([]);
+const isLoading = ref<boolean>(false);
+const transactionsError = ref<string>('');
   
-  // Отправка транзакции
-  const handleSend = async () => {
+// Отправка транзакции
+const handleSend = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(sendData.value)
-      })
+        const response = await fetch('http://localhost:8080/api/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(sendData.value),
+        });
   
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
   
-      sendError.value = ''
-      alert('Транзакция успешно отправлена!')
-      fetchTransactions() // Обновляем список транзакций
+        sendError.value = '';
+        alert('Транзакция успешно отправлена!');
+        fetchTransactions(); // Обновляем список транзакций
     } catch (err) {
-      sendError.value = err instanceof Error ? err.message : 'Неизвестная ошибка'
+        sendError.value = err instanceof Error ? err.message : 'Неизвестная ошибка';
     }
-  }
+};
   
-  // Получение баланса
-  const fetchBalance = async () => {
+// Получение баланса
+const fetchBalance = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/wallet/${walletAddress.value}/balance`
-      )
+        const response = await fetch(
+            `http://localhost:8080/api/wallet/${walletAddress.value}/balance`,
+        );
   
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
   
-      const data: BalanceResponse = await response.json()
-      balance.value = data.balance
-      balanceError.value = ''
+        const data: BalanceResponse = await response.json();
+        balance.value = data.balance;
+        balanceError.value = '';
     } catch (err) {
-      balance.value = null
-      balanceError.value = err instanceof Error ? err.message : 'Неизвестная ошибка'
+        balance.value = null;
+        balanceError.value = err instanceof Error ? err.message : 'Неизвестная ошибка';
     }
-  }
+};
   
-  // Получение транзакций
-  const fetchTransactions = async () => {
+// Получение транзакций
+const fetchTransactions = async () => {
     try {
-      isLoading.value = true
-      const response = await fetch(
-        `http://localhost:8080/api/transactions?count=${transactionsLimit.value}`
-      )
+        isLoading.value = true;
+        const response = await fetch(
+            `http://localhost:8080/api/transactions?count=${transactionsLimit.value}`,
+        );
   
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
   
-      transactions.value = await response.json()
-      transactionsError.value = ''
+        transactions.value = await response.json();
+        transactionsError.value = '';
     } catch (err) {
-      transactions.value = []
-      transactionsError.value = err instanceof Error ? err.message : 'Неизвестная ошибка'
+        transactions.value = [];
+        transactionsError.value = err instanceof Error ? err.message : 'Неизвестная ошибка';
     } finally {
-      isLoading.value = false
+        isLoading.value = false;
     }
-  }
-  </script>
+};
+</script>
   
   <style scoped>
   .container {

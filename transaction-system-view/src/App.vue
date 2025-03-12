@@ -1,24 +1,24 @@
 <template>
-  <div class="app-container">
-    <header class="app-header">
-      <h1>Wallet</h1>
-      <nav>
-        <router-link to="/">Главная</router-link>
-      </nav>
-    </header>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Wallet</h1>
+            <nav>
+                <router-link to="/">Главная</router-link>
+            </nav>
+        </header>
 
-    <main class="main-content">
-      <MainPage />
-    </main>
+        <main class="main-content">
+            <MainPage />
+        </main>
 
-    <footer class="app-footer">
-      <p>&copy; 2025 Wallet</p>
-    </footer>
-  </div>
+        <footer class="app-footer">
+            <p>&copy; 2025 Wallet</p>
+        </footer>
+    </div>
 </template>
 
 <script setup lang="ts">
-import MainPage from '@/views/MainPage.vue'
+import MainPage from '@/views/MainPage.vue';
 </script>
 
 <style>

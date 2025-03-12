@@ -1,33 +1,32 @@
-<!-- src/components/TransactionItem.vue -->
 <template>
     <div class="transaction">
-      <div class="transaction-header">
-        <span class="hash">{{ transaction.hash }}</span>
-        <span class="amount">{{ transaction.amount }} ETH</span>
-      </div>
-      <div class="transaction-details">
-        <div class="address">
-          <span class="label">От:</span>
-          {{ transaction.from }}
+        <div class="transaction-header">
+            <span class="hash">{{ transaction.hash }}</span>
+            <span class="amount">{{ transaction.amount }} ETH</span>
         </div>
-        <div class="address">
-          <span class="label">Кому:</span>
-          {{ transaction.to }}
+        <div class="transaction-details">
+            <div class="address">
+                <span class="label">От:</span>
+                {{ transaction.from }}
+            </div>
+            <div class="address">
+                <span class="label">Кому:</span>
+                {{ transaction.to }}
+            </div>
+            <div class="timestamp">
+                {{ new Date(transaction.timestamp).toLocaleString() }}
+            </div>
         </div>
-        <div class="timestamp">
-          {{ new Date(transaction.timestamp).toLocaleString() }}
-        </div>
-      </div>
     </div>
-  </template>
+</template>
   
-  <script setup lang="ts">
-  import type { Transaction } from '@/types'
+<script setup lang="ts">
+import type { Transaction } from '@/types';
   
-  defineProps<{
+defineProps<{
     transaction: Transaction
-  }>()
-  </script>
+}>();
+</script>
   
   <style scoped>
   .transaction {
