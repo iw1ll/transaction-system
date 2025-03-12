@@ -1,4 +1,3 @@
-<!-- src/views/MainPage.vue -->
 <template>
     <div class="container">
       <!-- Форма отправки средств -->
@@ -78,7 +77,7 @@
   const balanceError = ref<string>('')
   
   // Состояние транзакций
-  const transactionsLimit = ref<number>(5)
+  const transactionsLimit = ref<number>(1)
   const transactions = ref<Transaction[]>([])
   const isLoading = ref<boolean>(false)
   const transactionsError = ref<string>('')
