@@ -1,6 +1,7 @@
 <template>
     <div class="container">
         <section class="section">
+            <!-- Все кошельки -->
             <h2>Кошельки</h2>
             <div v-if="isLoadingWallet" class="loading">Загрузка кошельков...</div>
             <div v-else>
@@ -9,8 +10,11 @@
                 </div>
             </div>
 
-            <button @click="getAllWallets">Загрузить все кошельки!</button>
-
+            <div class="btn-action-wrapper">
+                <button @click="getAllWallets">Загрузить все кошельки!</button>
+                <button @click="hideWallets">Скрыть кошельки!</button>
+                <button @click="hi">Hi!</button>
+            </div>
         </section>
 
         <!-- Форма отправки средств -->
@@ -59,7 +63,7 @@
 </template>
   
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 // import { onMounted } from 'vue';
 import TransactionItem from '@/components/TransactionItem.vue';
   
@@ -100,15 +104,34 @@ const transactionsError = ref<string>('');
 const wallets = ref<BalanceResponse[]>([]);
 const isLoadingWallet = ref<boolean>(false);
 
-// onMounted(() => {
-//     getAllWallets();
-// });
+onMounted(() => {
+    hi()
+        .then((data: number[]) => {
+            data.forEach((item: number) => {
+                console.log(item);
+            });
+            return data;
+        })
+        .then((items: number[]) => {
+            console.log(items.map(item => item * 2));
+        });
+});
 
-// Отправка транзакции
+// Стереть (временно)
+const hideWallets = () => wallets.value = [];
+
+//Check
+const hi = ():Promise<number[]> => {
+    return new Promise<number[]>((resolve) => {
+        const data: number[] = [1, 2, 3];
+        resolve(data);
+    });
+};
+
+// Получить все кошельки
 const getAllWallets = async () => {
     try {
         isLoadingWallet.value = true;
-        setTimeout(() => {}, 5000);
         const response = await fetch('http://localhost:8080/api/wallets');
         wallets.value =  await response.json();
     } catch (err) {
@@ -221,6 +244,7 @@ const fetchTransactions = async () => {
     border-radius: 0.375rem;
     cursor: pointer;
     transition: background-color 0.2s;
+    margin-right: 5px;
   }
   
   button:hover {
@@ -248,5 +272,9 @@ const fetchTransactions = async () => {
     color: #718096;
     text-align: center;
     padding: 1rem;
+  }
+  .btn-action-wrapper {
+    /* display: flex;
+    justify-content: space-around; */
   }
   </style>
