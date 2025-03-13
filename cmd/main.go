@@ -49,8 +49,9 @@ func main() {
 
 	walletHandler := handlers.NewWalletHandler(db)
 
+	http.HandleFunc("/api/wallets", enableCORS(walletHandler.Wallets))
 	http.HandleFunc("/api/send", enableCORS(walletHandler.Send))
-	http.HandleFunc("/api/transactions", enableCORS(walletHandler.GetLastTransactions)) // Убрали слэш в конце
+	http.HandleFunc("/api/transactions", enableCORS(walletHandler.GetLastTransactions))
 	http.HandleFunc("/api/wallet/", enableCORS(handleWalletBalance(walletHandler)))
 
 	log.Println("Server is starting on port :8080")

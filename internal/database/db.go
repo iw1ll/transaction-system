@@ -89,6 +89,7 @@ func (d *Database) CreateWallets(count int) error {
 	if err = tx.Commit(); err != nil {
 		return err
 	}
+
 	return nil
 }
 

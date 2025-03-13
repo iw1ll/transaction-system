@@ -19,6 +19,33 @@ func NewWalletHandler(db *database.Database) *WalletHandler {
 	return &WalletHandler{db}
 }
 
+func (h *WalletHandler) Wallets(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	rows, err := h.db.Query("SELECT address, balance FROM wallets")
+	if err != nil {
+		http.Error(w, "Error fetching wallets", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var wallets []models.Wallet
+	for rows.Next() {
+		var wallet models.Wallet
+		if err := rows.Scan(&wallet.Address, &wallet.Balance); err != nil {
+			http.Error(w, "Error scanning wallet", http.StatusInternalServerError)
+			return
+		}
+		wallets = append(wallets, wallet)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(wallets)
+}
+
 func (h *WalletHandler) Send(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
