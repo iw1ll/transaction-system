@@ -66,21 +66,8 @@
 import { ref, onMounted } from 'vue';
 // import { onMounted } from 'vue';
 import TransactionItem from '@/components/TransactionItem.vue';
-  
-// Типы
-interface Transaction {
-    hash: string
-    from: string
-    to: string
-    amount: number
-    timestamp: number
-}
-  
-interface BalanceResponse {
-    address: string
-    balance: number
-}
-  
+import type { Transaction, BalanceResponse } from '@/types';
+
 // Состояние отправки средств
 const sendData = ref({
     from: '',
