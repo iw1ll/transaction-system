@@ -1,28 +1,16 @@
 <template>
     <div class="container">
-
-        <!-- <section class="section">
-            <h2>Последние транзакции</h2>
-            <div class="form-group">
-                <input v-model.number="transactionsLimit" type="number" min="1" max="100"/>
-                <button @click="fetchTransactions">Загрузить</button>
-            </div>
-            <div v-if="isLoading" class="loading">Загрузка...</div>
-            <div v-else>
-                <TransactionItem 
-                    v-for="tx in transactions"
-                    :key="tx.hash"
-                    :transaction="tx"
-                />
-            </div>
-            <div v-if="transactionsError" class="error">{{ transactionsError }}</div>
-        </section> -->
-
         <section class="section">
             <h2>Кошельки</h2>
-            <div v-for="wallet in wallets" :key="wallet.address">
-                <span class="address">{{ wallet.address }}</span> <div class="balance">{{ wallet.balance }} ETH</div> 
+            <div v-if="isLoadingWallet" class="loading">Загрузка кошельков...</div>
+            <div v-else>
+                <div v-for="wallet in wallets" :key="wallet.address">
+                    <span class="address">{{ wallet.address }}</span> <div class="balance">{{ wallet.balance }} ETH</div> 
+                </div>
             </div>
+
+            <button @click="getAllWallets">Загрузить все кошельки!</button>
+
         </section>
 
         <!-- Форма отправки средств -->
@@ -71,7 +59,8 @@
 </template>
   
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
+// import { onMounted } from 'vue';
 import TransactionItem from '@/components/TransactionItem.vue';
   
 // Типы
@@ -104,22 +93,29 @@ const balanceError = ref<string>('');
 // Состояние транзакций
 const transactionsLimit = ref<number>(1);
 const transactions = ref<Transaction[]>([]);
-const wallets = ref<BalanceResponse[]>([]);
 const isLoading = ref<boolean>(false);
 const transactionsError = ref<string>('');
 
-onMounted(() => {
-    getAllWallets();
-});
+// Кошельки
+const wallets = ref<BalanceResponse[]>([]);
+const isLoadingWallet = ref<boolean>(false);
+
+// onMounted(() => {
+//     getAllWallets();
+// });
 
 // Отправка транзакции
 const getAllWallets = async () => {
     try {
+        isLoadingWallet.value = true;
+        setTimeout(() => {}, 5000);
         const response = await fetch('http://localhost:8080/api/wallets');
         wallets.value =  await response.json();
     } catch (err) {
         wallets.value = [];
         throw new Error(`HTTP error! Error: ${err}`);
+    } finally {
+        isLoadingWallet.value = false;
     }
 };
 

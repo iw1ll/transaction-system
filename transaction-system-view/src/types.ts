@@ -7,7 +7,7 @@ export interface Transaction {
     timestamp: number
   }
   
-  export interface BalanceResponse {
+export interface BalanceResponse {
     address: string
     balance: number
   }
