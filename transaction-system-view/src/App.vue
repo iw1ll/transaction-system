@@ -1,3 +1,7 @@
+<script setup lang="ts">
+
+</script>
+
 <template>
     <div class="app-container">
         <header class="app-header">
@@ -5,8 +9,13 @@
             <nav>
                 <router-link to="/">Главная</router-link>
             </nav>
+            <!-- <nav>
+                <RouterLink to="/">Home</RouterLink>
+                <RouterLink to="/about">About</RouterLink>
+            </nav> -->
         </header>
-
+        <!-- <RouterView /> -->
+        <!-- <HelloWorld msg="You did it!" /> -->
         <main class="main-content">
             <MainPage />
         </main>
@@ -19,6 +28,9 @@
 
 <script setup lang="ts">
 import MainPage from '@/views/MainPage.vue';
+import { RouterLink } from 'vue-router';
+// import { RouterView } from 'vue-router';
+// import HelloWorld from './components/HelloWorld.vue';
 </script>
 
 <style>

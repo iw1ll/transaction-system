@@ -1,5 +1,30 @@
 <template>
     <div class="container">
+
+        <!-- <section class="section">
+            <h2>Последние транзакции</h2>
+            <div class="form-group">
+                <input v-model.number="transactionsLimit" type="number" min="1" max="100"/>
+                <button @click="fetchTransactions">Загрузить</button>
+            </div>
+            <div v-if="isLoading" class="loading">Загрузка...</div>
+            <div v-else>
+                <TransactionItem 
+                    v-for="tx in transactions"
+                    :key="tx.hash"
+                    :transaction="tx"
+                />
+            </div>
+            <div v-if="transactionsError" class="error">{{ transactionsError }}</div>
+        </section> -->
+
+        <section class="section">
+            <h2>Кошельки</h2>
+            <div v-for="wallet in wallets" :key="wallet.address">
+                <span class="address">{{ wallet.address }}</span> <div class="balance">{{ wallet.balance }} ETH</div> 
+            </div>
+        </section>
+
         <!-- Форма отправки средств -->
         <section class="section">
             <h2>Отправить средства</h2>
@@ -46,7 +71,7 @@
 </template>
   
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import TransactionItem from '@/components/TransactionItem.vue';
   
 // Типы
@@ -79,9 +104,25 @@ const balanceError = ref<string>('');
 // Состояние транзакций
 const transactionsLimit = ref<number>(1);
 const transactions = ref<Transaction[]>([]);
+const wallets = ref<BalanceResponse[]>([]);
 const isLoading = ref<boolean>(false);
 const transactionsError = ref<string>('');
-  
+
+onMounted(() => {
+    getAllWallets();
+});
+
+// Отправка транзакции
+const getAllWallets = async () => {
+    try {
+        const response = await fetch('http://localhost:8080/api/wallets');
+        wallets.value =  await response.json();
+    } catch (err) {
+        wallets.value = [];
+        throw new Error(`HTTP error! Error: ${err}`);
+    }
+};
+
 // Отправка транзакции
 const handleSend = async () => {
     try {
@@ -99,7 +140,8 @@ const handleSend = async () => {
   
         sendError.value = '';
         alert('Транзакция успешно отправлена!');
-        fetchTransactions(); // Обновляем список транзакций
+        fetchTransactions();
+        getAllWallets();
     } catch (err) {
         sendError.value = err instanceof Error ? err.message : 'Неизвестная ошибка';
     }
@@ -196,6 +238,12 @@ const fetchTransactions = async () => {
   
   .balance {
     color: #48bb78;
+    font-weight: 500;
+    margin-top: 0.5rem;
+  }
+
+  .address {
+    color: #111814;
     font-weight: 500;
     margin-top: 0.5rem;
   }
