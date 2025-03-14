@@ -1,22 +1,6 @@
 <template>
     <div class="container">
-        <section class="section">
-            <!-- Все кошельки -->
-            <h2>Кошельки</h2>
-            <div v-if="isLoadingWallet" class="loading">Загрузка кошельков...</div>
-            <div v-else>
-                <div v-for="wallet in wallets" :key="wallet.address">
-                    <span class="address">{{ wallet.address }}</span> <div class="balance">{{ wallet.balance }} ETH</div> 
-                </div>
-            </div>
-
-            <div class="btn-action-wrapper">
-                <button @click="getAllWallets">Загрузить все кошельки!</button>
-                <button @click="hideWallets">Скрыть кошельки!</button>
-                <button @click="hi">Hi!</button>
-            </div>
-        </section>
-
+        <Wallets/>
         <!-- Форма отправки средств -->
         <section class="section">
             <h2>Отправить средства</h2>
@@ -63,10 +47,11 @@
 </template>
   
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 // import { onMounted } from 'vue';
 import TransactionItem from '@/components/TransactionItem.vue';
 import type { Transaction, BalanceResponse } from '@/types';
+import Wallets  from '@/components/Wallets.vue';
 
 // Состояние отправки средств
 const sendData = ref({
@@ -90,30 +75,6 @@ const transactionsError = ref<string>('');
 // Кошельки
 const wallets = ref<BalanceResponse[]>([]);
 const isLoadingWallet = ref<boolean>(false);
-
-onMounted(() => {
-    hi()
-        .then((data: number[]) => {
-            data.forEach((item: number) => {
-                console.log(item);
-            });
-            return data;
-        })
-        .then((items: number[]) => {
-            console.log(items.map(item => item * 2));
-        });
-});
-
-// Стереть (временно)
-const hideWallets = () => wallets.value = [];
-
-//Check
-const hi = ():Promise<number[]> => {
-    return new Promise<number[]>((resolve) => {
-        const data: number[] = [1, 2, 3];
-        resolve(data);
-    });
-};
 
 // Получить все кошельки
 const getAllWallets = async () => {
@@ -196,7 +157,7 @@ const fetchTransactions = async () => {
 };
 </script>
   
-  <style scoped>
+  <style>
   .container {
     max-width: 800px;
     margin: 0 auto;

@@ -9,10 +9,10 @@
             <nav>
                 <router-link to="/">Главная</router-link>
             </nav>
-            <!-- <nav>
+            <nav>
                 <RouterLink to="/">Home</RouterLink>
                 <RouterLink to="/about">About</RouterLink>
-            </nav> -->
+            </nav>
         </header>
         <!-- <RouterView /> -->
         <!-- <HelloWorld msg="You did it!" /> -->
