@@ -12,10 +12,10 @@ import (
 )
 
 type WalletHandler struct {
-	db *database.Database
+	db database.DatabaseInterface
 }
 
-func NewWalletHandler(db *database.Database) *WalletHandler {
+func NewWalletHandler(db database.DatabaseInterface) *WalletHandler {
 	return &WalletHandler{db}
 }
 
@@ -71,13 +71,15 @@ func (h *WalletHandler) Send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.db.Exec("UPDATE wallets SET balance = balance - $1 WHERE address = $2", req.Amount, req.From)
+	_, err = h.db.Exec("UPDATE wallets SET balance = balance - $1 WHERE address = $2",
+		req.Amount, req.From)
 	if err != nil {
 		http.Error(w, "Error updating sender wallet", http.StatusInternalServerError)
 		return
 	}
 
-	_, err = h.db.Exec("UPDATE wallets SET balance = balance + $1 WHERE address = $2", req.Amount, req.To)
+	_, err = h.db.Exec("UPDATE wallets SET balance = balance + $1 WHERE address = $2",
+		req.Amount, req.To)
 	if err != nil {
 		http.Error(w, "Error updating receiver wallet", http.StatusInternalServerError)
 		return
@@ -90,7 +92,8 @@ func (h *WalletHandler) Send(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
-		"message": fmt.Sprintf("Successfully transferred %.2f from %s to %s", req.Amount, req.From, req.To),
+		"message": fmt.Sprintf("Successfully transferred %.2f from %s to %s",
+			req.Amount, req.From, req.To),
 	})
 }
 
@@ -114,21 +117,18 @@ func (h *WalletHandler) GetLastTransactions(w http.ResponseWriter, r *http.Reque
 
 func (h *WalletHandler) GetBalance(w http.ResponseWriter, r *http.Request) {
 	pathParts := strings.Split(r.URL.Path, "/")
-
-	// Ожидаемый формат: /api/wallet/{address}/balance
-	if len(pathParts) < 5 ||
-		pathParts[0] != "" ||
-		pathParts[1] != "api" ||
-		pathParts[2] != "wallet" ||
+	if len(pathParts) < 5 || pathParts[0] != "" ||
+		pathParts[1] != "api" || pathParts[2] != "wallet" ||
 		pathParts[4] != "balance" {
-		errorResponse(w, "Invalid URL format. Use /api/wallet/{address}/balance", http.StatusBadRequest)
+		errorResponse(w, "Invalid URL format. Use /api/wallet/{address}/balance",
+			http.StatusBadRequest)
 		return
 	}
 
 	address := pathParts[3]
-
 	var balance float64
-	err := h.db.QueryRow("SELECT balance FROM wallets WHERE address = $1", address).Scan(&balance)
+	err := h.db.QueryRow("SELECT balance FROM wallets WHERE address = $1",
+		address).Scan(&balance)
 
 	switch {
 	case err == sql.ErrNoRows:
