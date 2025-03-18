@@ -1,57 +1,50 @@
-<template>
-    <div class="container">
-        <Wallets/>
-        <!-- Форма отправки средств -->
-        <section class="section">
-            <h2>Отправить средства</h2>
-            <div class="form-group">
-                <input v-model="sendData.from" placeholder="Отправитель"/>
-                <input v-model="sendData.to" placeholder="Получатель"/>
-                <input v-model.number="sendData.amount" type="number" placeholder="Сумма"/>
-                <button @click="handleSend">Отправить</button>
-            </div>
-            <div v-if="sendError" class="error">{{ sendError }}</div>
-        </section>
-  
-        <!-- Проверка баланса -->
-        <section class="section">
-            <h2>Баланс кошелька</h2>
-            <div class="form-group">
-                <input v-model="walletAddress" placeholder="Адрес кошелька"/>
-                <button @click="fetchBalance">Проверить</button>
-            </div>
-            <div v-if="balance !== null" class="balance">
-                Текущий баланс: {{ balance }} ETH
-            </div>
-            <div v-if="balanceError" class="error">{{ balanceError }}</div>
-        </section>
-  
-        <!-- История транзакций -->
-        <section class="section">
-            <h2>Последние транзакции</h2>
-            <div class="form-group">
-                <input v-model.number="transactionsLimit" type="number" min="1" max="100"/>
-                <button @click="fetchTransactions">Загрузить</button>
-            </div>
-            <div v-if="isLoading" class="loading">Загрузка...</div>
-            <div v-else>
-                <TransactionItem 
-                    v-for="tx in transactions"
-                    :key="tx.hash"
-                    :transaction="tx"
-                />
-            </div>
-            <div v-if="transactionsError" class="error">{{ transactionsError }}</div>
-        </section>
-    </div>
-</template>
-  
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 // import { onMounted } from 'vue';
 import TransactionItem from '@/components/TransactionItem.vue';
 import type { Transaction, BalanceResponse } from '@/types';
 import Wallets  from '@/components/Wallets.vue';
+import { useCounterStore } from '@/stores/counter';
+const counterStore = useCounterStore();
+
+onMounted(() => {
+    hi()
+        .then((data: number[]) => {
+            data.forEach((item: number) => {
+                console.log(item);
+            });
+            return data;
+        })
+        .then((items: number[]) => {
+            console.log(items.map(item => item * 2));
+        });
+});
+
+
+// Стереть (временно)
+const hideWallets = () => wallets.value = [];
+
+const hiThen = () => {
+    hi().then((data: number[]) => {
+        data.forEach((item: number) => {
+            console.log(item);
+        });
+        return data;
+    })
+        .then((items: number[]) => {
+            console.log(items.map(item => item * 2));
+        });
+};
+
+//Check
+const hi = ():Promise<number[]> => {
+    console.log('hi!');
+    return new Promise<number[]>((resolve) => {
+        const data: number[] = [1, 2, 3];
+        resolve(data);
+    });
+};
+
 
 // Состояние отправки средств
 const sendData = ref({
@@ -156,7 +149,84 @@ const fetchTransactions = async () => {
     }
 };
 </script>
+<template>
+    <div class="container">
+        <div>
+            <p>Count: {{ counterStore.count }}</p>
+            <p>Double: {{ counterStore.doubleCount }}</p>
+            <p>Double: {{ counterStore.greet('m') }}</p>
+            <button @click="counterStore.increment">+1</button>
+            <button @click="counterStore.fetchData">+1</button>
+            <button @click="counterStore.$patch({
+                count: counterStore.count + 1,
+                name: 'New Name'
+            })">2</button>
+        </div>
+
+        <section class="section">
+            <!-- Все кошельки -->
+            <h2>Кошельки</h2>
+            <div v-if="isLoadingWallet" class="loading">Загрузка кошельков...</div>
+            <div v-else>
+                <div v-for="wallet in wallets" :key="wallet.address">
+                    <span class="address">{{ wallet.address }}</span> <div class="balance">{{ wallet.balance }} ETH</div> 
+                </div>
+            </div>
+
+            <div class="btn-action-wrapper">
+                <button @click="getAllWallets">Загрузить все кошельки!</button>
+                <button @click="hideWallets">Скрыть кошельки!</button>
+                <button @click="hi">Hi!</button>
+                <button @click="hiThen">hiThen!</button>
+            </div>
+        </section>
+        
+        <Wallets/>
+        <!-- Форма отправки средств -->
+        <section class="section">
+            <h2>Отправить средства</h2>
+            <div class="form-group">
+                <input v-model="sendData.from" placeholder="Отправитель"/>
+                <input v-model="sendData.to" placeholder="Получатель"/>
+                <input v-model.number="sendData.amount" type="number" placeholder="Сумма"/>
+                <button @click="handleSend">Отправить</button>
+            </div>
+            <div v-if="sendError" class="error">{{ sendError }}</div>
+        </section>
   
+        <!-- Проверка баланса -->
+        <section class="section">
+            <h2>Баланс кошелька</h2>
+            <div class="form-group">
+                <input v-model="walletAddress" placeholder="Адрес кошелька"/>
+                <button @click="fetchBalance">Проверить</button>
+            </div>
+            <div v-if="balance !== null" class="balance">
+                Текущий баланс: {{ balance }} ETH
+            </div>
+            <div v-if="balanceError" class="error">{{ balanceError }}</div>
+        </section>
+  
+        <!-- История транзакций -->
+        <section class="section">
+            <h2>Последние транзакции</h2>
+            <div class="form-group">
+                <input v-model.number="transactionsLimit" type="number" min="1" max="100"/>
+                <button @click="fetchTransactions">Загрузить</button>
+            </div>
+            <div v-if="isLoading" class="loading">Загрузка...</div>
+            <div v-else>
+                <TransactionItem 
+                    v-for="tx in transactions"
+                    :key="tx.hash"
+                    :transaction="tx"
+                />
+            </div>
+            <div v-if="transactionsError" class="error">{{ transactionsError }}</div>
+        </section>
+    </div>
+</template>
+
   <style>
   .container {
     max-width: 800px;
